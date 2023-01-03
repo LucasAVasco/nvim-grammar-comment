@@ -1,0 +1,8 @@
+# vim backup files
+*~
+.*~
+
+
+# LanguageTool directory and files
+/languagetool
+/lgt-download.zip
