@@ -3,6 +3,7 @@ let s:lgt_url = ''
 let s:lgt_path = ''
 let s:lgt_file = ''
 let s:job_id = 0
+let s:current_matches = []
 
 
 
@@ -204,4 +205,52 @@ function grammar_comment#run()
 	if grammar_comment#check_buffer(l:current_bufnr, l:extension) != -1
 		lwindow
 	endif
+endfunction
+
+
+function grammar_comment#hide_blocks()
+	for m in s:current_matches
+		call matchdelete(m)
+	endfor
+
+	let s:current_matches = []
+endfunction
+
+
+function grammar_comment#show_blocks()
+	call grammar_comment#config()
+
+	let l:current_bufnr = bufnr('%')
+	let l:extension = expand('%:e')
+
+	" Removes old matches
+	call grammar_comment#hide_blocks()
+
+	" Does not run if there is no valid buffer
+	if bufname(l:current_bufnr) == ''
+		return -1
+	endif
+
+	" Gets a string with the contents of the buffer
+	let l:buf_lines = getbufline(l:current_bufnr, 1, '$')
+
+	" Gets the blocks
+	let l:blocks = grammar_comment#text_block#get_blocks(l:buf_lines, l:extension)
+
+	if l:blocks == {}  " Can not get the blocks
+		echo 'This file type is not supported!'
+		return -1
+	endif
+
+	" Matches the blocks
+	for block in l:blocks.unl_blocks
+		" Each line of the block
+		for nr in range(block.n_lines)
+			call add(s:current_matches, matchaddpos('CommentBlocksHighlight', [[
+						\ block.f_line + nr + 1,
+						\ block.pos + 1,
+						\ len(l:buf_lines[block.f_line + nr]) - block.pos
+						\]]))
+		endfor
+	endfor
 endfunction
