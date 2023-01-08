@@ -102,9 +102,16 @@ function grammar_comment#add_to_loclist(block, text_lines, buffer_nr)
 
 	" Lines sizes
 	let l:lines_sizes = []
-	for line in a:text_lines
-		call add(l:lines_sizes, len(line) + 1)
-	endfor
+
+	if a:block.end_pos == -1  " Unlimited block
+		for line in a:text_lines
+			call add(l:lines_sizes, len(line) + 1)
+		endfor
+
+	else                      " Limited block
+		let l:lines_sizes = map(range(a:block.n_lines),
+					\ a:block.end_pos - a:block.pos + 2)
+	endif
 
 	for data_item in l:data.matches
 		" Position
@@ -165,17 +172,17 @@ function grammar_comment#check_buffer(buffer_nr, extension)
 	" Gets the blocks
 	let l:blocks = grammar_comment#text_block#get_blocks(l:buf_lines, a:extension)
 
-	if l:blocks == {}  " Can not get the blocks
+	if l:blocks == []  " Can not get the blocks
 		echo 'This file type is not supported!'
 		return -1
 	endif
 
 	" Checks the blocks
-	for block in l:blocks.unl_blocks
+	for block in l:blocks
 		let l:text_lines = []
 
 		for line in l:buf_lines[block.f_line:block.f_line + block.n_lines - 1]
-			call add(l:text_lines, line[block.pos:])
+			call add(l:text_lines, line[block.pos:block.end_pos])
 		endfor
 
 		" Adds to loclist
@@ -237,20 +244,32 @@ function grammar_comment#show_blocks()
 	" Gets the blocks
 	let l:blocks = grammar_comment#text_block#get_blocks(l:buf_lines, l:extension)
 
-	if l:blocks == {}  " Can not get the blocks
+	if l:blocks == []  " Can not get the blocks
 		echo 'This file type is not supported!'
 		return -1
 	endif
 
 	" Matches the blocks
-	for block in l:blocks.unl_blocks
-		" Each line of the block
-		for nr in range(block.n_lines)
-			call add(s:current_matches, matchaddpos('CommentBlocksHighlight', [[
-						\ block.f_line + nr + 1,
-						\ block.pos + 1,
-						\ len(l:buf_lines[block.f_line + nr]) - block.pos
-						\]]))
-		endfor
+	for block in l:blocks
+		" Unlimited block
+		if block.end_pos == -1
+			for nr in range(block.n_lines)
+				call add(s:current_matches, matchaddpos('CommentBlocksHighlight', [[
+							\ block.f_line + nr + 1,
+							\ block.pos + 1,
+							\ len(l:buf_lines[block.f_line + nr]) - block.pos
+							\]]))
+			endfor
+
+		" Limited block
+		else
+			for nr in range(block.n_lines)
+				call add(s:current_matches, matchaddpos('CommentBlocksHighlight', [[
+							\ block.f_line + nr + 1,
+							\ block.pos + 1,
+							\ block.end_pos - block.pos + 1
+							\]]))
+			endfor
+		endif
 	endfor
 endfunction

@@ -29,9 +29,6 @@ function grammar_comment#vimscript#functions#get_blocks(text_list)
 		call add(l:sing_line_pos, -1)
 	endfor
 
-	" Converts the vectors to blocks
-	let l:unl_blocks = grammar_comment#functions#mult_pos2unl_blocks(l:mult_line_pos) +
+	return grammar_comment#functions#mult_pos2unl_blocks(l:mult_line_pos) +
 				\grammar_comment#functions#sing_pos2unl_blocks(l:sing_line_pos)
-
-	return { 'unl_blocks': l:unl_blocks, 'blocks': [] }
 endfunction

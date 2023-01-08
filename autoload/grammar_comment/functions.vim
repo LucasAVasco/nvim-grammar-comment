@@ -17,6 +17,7 @@ function grammar_comment#functions#mult_pos2unl_blocks(mult_line_pos)
 				if l:current_pos != -1  " If it is closing a block
 					call add(l:unl_blocks, {
 								\ 'pos': l:current_pos,
+								\ 'end_pos': -1,
 								\ 'f_line': l:f_line,
 								\ 'n_lines': nr - l:f_line
 								\ })
@@ -31,6 +32,7 @@ function grammar_comment#functions#mult_pos2unl_blocks(mult_line_pos)
 		if a:mult_line_pos[-1] != -1
 			call add(l:unl_blocks, {
 						\ 'pos': l:current_pos,
+						\ 'end_pos': -1,
 						\ 'f_line': l:f_line,
 						\ 'n_lines': len(a:mult_line_pos) - l:f_line
 						\ })
@@ -50,6 +52,7 @@ function grammar_comment#functions#sing_pos2unl_blocks(sing_line_pos)
 			if a:sing_line_pos[nr] != -1
 				call add(l:unl_blocks, {
 							\ 'pos': a:sing_line_pos[nr],
+							\ 'end_pos': -1,
 							\ 'f_line': nr,
 							\ 'n_lines': 1
 							\ })
@@ -58,4 +61,66 @@ function grammar_comment#functions#sing_pos2unl_blocks(sing_line_pos)
 	endif
 
 	return l:unl_blocks
+endfunction
+
+
+" Converts two vectors with positions (multi line blocks) to limited blocks
+function grammar_comment#functions#mult_pos2lim_blocks(pos, end_pos)
+	let l:lim_blocks = []
+
+	if len(a:pos) > 0
+		let l:current_pos = -1
+		let l:current_end_pos = -1
+		let l:f_line = -1
+
+		for nr in range(len(a:pos))
+			if a:pos[nr] != l:current_pos || a:end_pos[nr] != l:current_end_pos
+				if l:current_pos != -1  " If it is closing a block
+					call add(l:lim_blocks, {
+								\ 'pos': l:current_pos,
+								\ 'end_pos': l:current_end_pos,
+								\ 'f_line': l:f_line,
+								\ 'n_lines': nr - l:f_line
+								\ })
+				endif
+
+				let l:f_line = nr
+				let l:current_pos = a:pos[nr]
+				let l:current_end_pos = a:end_pos[nr]
+			endif
+		endfor
+
+		" Last block
+		if a:pos[-1] != -1
+			call add(l:lim_blocks, {
+						\ 'pos': l:current_pos,
+						\ 'end_pos': l:current_end_pos,
+						\ 'f_line': l:f_line,
+						\ 'n_lines': len(a:pos) - l:f_line
+						\ })
+		endif
+	endif
+
+	return l:lim_blocks
+endfunction
+
+
+" Converts two vectors with positions (single line blocks) to limited blocks
+function grammar_comment#functions#sing_pos2lim_blocks(pos, end_pos)
+	let l:lim_blocks = []
+
+	if len(a:pos) > 0
+		for nr in range(len(a:pos))
+			if a:pos[nr] != -1
+				call add(l:lim_blocks, {
+							\ 'pos': a:pos[nr],
+							\ 'end_pos': a:end_pos[nr],
+							\ 'f_line': nr,
+							\ 'n_lines': 1
+							\ })
+			endif
+		endfor
+	endif
+
+	return l:lim_blocks
 endfunction
