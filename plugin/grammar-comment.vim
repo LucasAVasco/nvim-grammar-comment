@@ -4,8 +4,16 @@ let g:lgt_answer_timeout = get(g:, 'lgt_answer_timeout', 10)
 
 
 
-if !hlexists('CommentBlocksHighlight')
-	highlight CommentBlocksHighlight ctermbg=green guibg=green ctermfg=white guifg=white
+if !hlexists('CommentBlocksHighlight1')
+	highlight CommentBlocksHighlight1 ctermbg=red guibg=red ctermfg=white guifg=white
+endif
+
+if !hlexists('CommentBlocksHighlight2')
+	highlight CommentBlocksHighlight2 ctermbg=green guibg=green ctermfg=white guifg=white
+endif
+
+if !hlexists('CommentBlocksHighlight3')
+	highlight CommentBlocksHighlight3 ctermbg=blue guibg=blue ctermfg=white guifg=white
 endif
 
 

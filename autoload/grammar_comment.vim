@@ -250,11 +250,13 @@ function grammar_comment#show_blocks()
 	endif
 
 	" Matches the blocks
+	let l:hi_nr = 1
+
 	for block in l:blocks
 		" Unlimited block
 		if block.end_pos == -1
 			for nr in range(block.n_lines)
-				call add(s:current_matches, matchaddpos('CommentBlocksHighlight', [[
+				call add(s:current_matches, matchaddpos('CommentBlocksHighlight' . l:hi_nr, [[
 							\ block.f_line + nr + 1,
 							\ block.pos + 1,
 							\ len(l:buf_lines[block.f_line + nr]) - block.pos
@@ -264,12 +266,19 @@ function grammar_comment#show_blocks()
 		" Limited block
 		else
 			for nr in range(block.n_lines)
-				call add(s:current_matches, matchaddpos('CommentBlocksHighlight', [[
+				call add(s:current_matches, matchaddpos('CommentBlocksHighlight'. l:hi_nr, [[
 							\ block.f_line + nr + 1,
 							\ block.pos + 1,
 							\ block.end_pos - block.pos + 1
 							\]]))
 			endfor
+		endif
+
+		" Next highlight group
+		if l:hi_nr == 3
+			let l:hi_nr = 1
+		else
+			let l:hi_nr += 1
 		endif
 	endfor
 endfunction
