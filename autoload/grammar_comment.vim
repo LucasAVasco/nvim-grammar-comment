@@ -172,10 +172,15 @@ function grammar_comment#check_buffer(buffer_nr, extension)
 	" Gets the blocks
 	let l:blocks = grammar_comment#text_block#get_blocks(l:buf_lines, a:extension)
 
-	if l:blocks == []  " Can not get the blocks
+	if [l:blocks] == [-1]
 		echo 'This file type is not supported!'
 		return -1
+
+	elseif l:blocks == []
+		echo 'This file has not text to check.'
+		return 0
 	endif
+
 
 	" Checks the blocks
 	for block in l:blocks
@@ -244,9 +249,13 @@ function grammar_comment#show_blocks()
 	" Gets the blocks
 	let l:blocks = grammar_comment#text_block#get_blocks(l:buf_lines, l:extension)
 
-	if l:blocks == []  " Can not get the blocks
+	if [l:blocks] == [-1]
 		echo 'This file type is not supported!'
 		return -1
+
+	elseif l:blocks == []
+		echo 'This file has not text to check.'
+		return 0
 	endif
 
 	" Matches the blocks

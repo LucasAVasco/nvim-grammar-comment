@@ -22,8 +22,12 @@ function grammar_comment#text_block#get_blocks(buf_lines, extension)
 
 	" Gets the blocks
 	let l:blocks = []
+
 	if a:extension == 'vim'
 		let l:blocks = grammar_comment#vimscript#functions#get_blocks(a:buf_lines)
+
+	else  " File type is not supported
+		return -1
 	endif
 
 	" Sorts the blocks
