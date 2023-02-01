@@ -153,7 +153,7 @@ function grammar_comment#add_to_loclist(block, text_lines, buffer_nr)
 		call add(l:loclist_param, l:a_match)
 	endfor
 
-	"Adds to the loclist
+	" Adds to the loclist
 	call setloclist(0, loclist_param, 'a')
 
 	return 0
