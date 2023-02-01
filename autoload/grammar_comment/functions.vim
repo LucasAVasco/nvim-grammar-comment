@@ -1,3 +1,19 @@
+" Replaces the text with spaces
+function s:spaces(text)
+	let l:space = ' '
+	return join(map(range(len(a:text)), 'l:space'), '')
+endfunction
+
+
+" Replaces double-quoted strings with spaces
+function grammar_comment#functions#clear_2_quotes_string(text)
+	let l:text = substitute(a:text, '".\{-}\zs\\\\\ze.\{-}"', '  ', 'g')
+	let l:text = substitute(l:text, '\\\@<!".\{-}\\\@<!"', '\=s:spaces(submatch(0))' , 'g')
+
+	return l:text
+endfunction
+
+
 " Removes single quote and double quotes strings
 function grammar_comment#functions#remove_1_2_quotes_string(text)
 	return substitute(a:text, '\('."'".'.\{-}'."'".'\)\|\(\\\@1<!".\{-}\\\@1<!"\)', '', 'g')
