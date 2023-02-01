@@ -124,3 +124,26 @@ function grammar_comment#functions#sing_pos2lim_blocks(pos, end_pos)
 
 	return l:lim_blocks
 endfunction
+
+
+" Converts a list with blocks positions (single line blocks) to limited blocks
+function grammar_comment#functions#sing_list2lim_blocks(pos_list)
+	let l:lim_blocks = []
+
+	if len(a:pos_list) > 0
+		for nr in range(len(a:pos_list))
+			if [a:pos_list[nr]] != [-1]
+				for block in a:pos_list[nr]
+					call add(l:lim_blocks, {
+								\ 'pos': block[0],
+								\ 'end_pos': block[1],
+								\ 'f_line': nr,
+								\ 'n_lines': 1
+								\ })
+				endfor
+			endif
+		endfor
+	endif
+
+	return l:lim_blocks
+endfunction
