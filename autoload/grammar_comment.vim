@@ -28,6 +28,13 @@ function grammar_comment#download_lgt()
 endfunction
 
 
+function s:std_error(job_id, data, event) dict
+	if match(join(a:data), 'Could not start LanguageTool') != -1
+		let s:job_id = -2
+	endif
+endfunction
+
+
 function grammar_comment#start_lgt()
 	call grammar_comment#config()
 
@@ -41,20 +48,26 @@ function grammar_comment#start_lgt()
 		return -1
 	endif
 
-	if s:job_id <= 0
-		let s:job_id = jobstart([ 'java', '-cp', s:lgt_file, 'org.languagetool.server.HTTPServer', '--port', '8081' ])
+	if s:job_id == 0
+		let s:job_id = jobstart([ 'java', '-cp', s:lgt_file, 'org.languagetool.server.HTTPServer', '--port', '8081' ],
+					\ {'on_stderr': function('s:std_error')})
+
+		if s:job_id == -1
+			echo 'Could not start Java!'
+			return -2
+		endif
 	endif
 
 	return 0
 endfunction
 
 
-function grammar_comment#close_lgt()
+function grammar_comment#stop_lgt()
 	if s:job_id > 0
 		call jobstop(s:job_id)
 	endif
 
-	s:job_id = 0
+	let s:job_id = 0
 endfunction
 
 
@@ -66,9 +79,17 @@ endfunction
 
 
 function grammar_comment#check_text(text_lines)
+	" First time sending the text
 	let l:output = grammar_comment#send_text_with_curl(a:text_lines)
 	let l:time = 0
 
+	" Try to reset the LanguageTool server
+	if l:output == '' && s:job_id == -2
+		call grammar_comment#stop_lgt()
+		call grammar_comment#start_lgt()
+	endif
+
+	" Try again to send the text
 	while l:output == '' && l:time < g:lgt_answer_timeout
 		let l:output = grammar_comment#send_text_with_curl(a:text_lines)
 		let l:time += 1
@@ -191,8 +212,9 @@ function grammar_comment#check_buffer(buffer_nr, extension)
 		endfor
 
 		" Adds to loclist
-		if grammar_comment#add_to_loclist(block, l:text_lines, a:buffer_nr) == -1
+		if grammar_comment#add_to_loclist(block, l:text_lines, a:buffer_nr) != 0
 			echo 'Unable to access LanguageTool server. Try later!'
+			return -2
 		endif
 	endfor
 
@@ -205,8 +227,8 @@ function grammar_comment#run()
 	let l:extension = expand('%:e')
 
 	" Starts LanguageTool
-	if grammar_comment#start_lgt() == -1
-		echo 'Can not donwload LanguageTool!'
+	if grammar_comment#start_lgt() != 0
+		echo 'Can not start LanguageTool!'
 		return -1
 	endif
 
@@ -214,7 +236,7 @@ function grammar_comment#run()
 	call setloclist(l:current_bufnr, [], 'r')
 
 	" Checks the current buffer
-	if grammar_comment#check_buffer(l:current_bufnr, l:extension) != -1
+	if grammar_comment#check_buffer(l:current_bufnr, l:extension) == 0
 		lwindow
 	endif
 endfunction
