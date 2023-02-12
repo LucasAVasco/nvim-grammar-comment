@@ -18,6 +18,8 @@ endif
 
 
 
+command! -nargs=0 GrammarStartLGT :call grammar_comment#start_lgt()
+command! -nargs=0 GrammarStopLGT :call grammar_comment#stop_lgt()
 command! -nargs=0 GrammarCheck :call grammar_comment#run()
 command! -nargs=0 GrammarShowBlocks :call grammar_comment#show_blocks()
 command! -nargs=0 GrammarHideBlocks :call grammar_comment#hide_blocks()
