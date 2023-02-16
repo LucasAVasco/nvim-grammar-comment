@@ -181,7 +181,7 @@ function grammar_comment#add_to_loclist(block, text_lines, buffer_nr)
 endfunction
 
 
-function grammar_comment#check_buffer(buffer_nr, extension)
+function grammar_comment#check_buffer(buffer_nr, file_name, extension)
 	" Does not run if there is no valid buffer
 	if bufname(a:buffer_nr) == ''
 		return -1
@@ -191,7 +191,7 @@ function grammar_comment#check_buffer(buffer_nr, extension)
 	let l:buf_lines = getbufline(a:buffer_nr, 1, '$')
 
 	" Gets the blocks
-	let l:blocks = grammar_comment#text_block#get_blocks(l:buf_lines, a:extension)
+	let l:blocks = grammar_comment#text_block#get_blocks(l:buf_lines, a:file_name, a:extension)
 
 	if [l:blocks] == [-1]
 		echo 'This file type is not supported!'
@@ -225,6 +225,7 @@ endfunction
 function grammar_comment#run()
 	let l:current_bufnr = bufnr('%')
 	let l:extension = expand('%:e')
+	let l:file_name = expand('%:t')
 
 	" Starts LanguageTool
 	if grammar_comment#start_lgt() != 0
@@ -236,7 +237,7 @@ function grammar_comment#run()
 	call setloclist(l:current_bufnr, [], 'r')
 
 	" Checks the current buffer
-	if grammar_comment#check_buffer(l:current_bufnr, l:extension) == 0
+	if grammar_comment#check_buffer(l:current_bufnr, l:file_name, l:extension) == 0
 		lwindow
 	endif
 endfunction
@@ -256,6 +257,7 @@ function grammar_comment#show_blocks()
 
 	let l:current_bufnr = bufnr('%')
 	let l:extension = expand('%:e')
+	let l:file_name = expand('%:t')
 
 	" Removes old matches
 	call grammar_comment#hide_blocks()
@@ -269,7 +271,7 @@ function grammar_comment#show_blocks()
 	let l:buf_lines = getbufline(l:current_bufnr, 1, '$')
 
 	" Gets the blocks
-	let l:blocks = grammar_comment#text_block#get_blocks(l:buf_lines, l:extension)
+	let l:blocks = grammar_comment#text_block#get_blocks(l:buf_lines, l:file_name, l:extension)
 
 	if [l:blocks] == [-1]
 		echo 'This file type is not supported!'

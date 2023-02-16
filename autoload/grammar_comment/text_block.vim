@@ -16,7 +16,7 @@ function s:compareBlocks(b1, b2)
 endfunction
 
 
-function grammar_comment#text_block#get_blocks(buf_lines, extension)
+function grammar_comment#text_block#get_blocks(buf_lines, file_name, extension)
 	" Gets a string with the contents of the buffer
 	let l:text = join(a:buf_lines, "\n")
 
