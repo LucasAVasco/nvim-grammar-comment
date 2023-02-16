@@ -23,7 +23,12 @@ function grammar_comment#text_block#get_blocks(buf_lines, file_name, extension)
 	" Gets the blocks
 	let l:blocks = []
 
-	if a:extension == 'vim'
+	" File type defined by name
+	if a:file_name == 'COMMIT_EDITMSG' && a:extension == ''
+		let l:blocks = grammar_comment#git#commit#functions#get_blocks(a:buf_lines)
+
+	" File type defined by extension
+	elseif a:extension == 'vim'
 		let l:blocks = grammar_comment#vimscript#functions#get_blocks(a:buf_lines)
 
 	elseif a:extension == 'c' || a:extension == 'cpp' || a:extension == 'h' || a:extension == 'hpp'
