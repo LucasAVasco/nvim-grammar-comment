@@ -105,7 +105,7 @@ function grammar_comment#check_text(text_lines)
 endfunction
 
 
-function grammar_comment#add_to_loclist(block, text_lines, buffer_nr)
+function grammar_comment#add_to_loclist(window, buffer_nr, block, text_lines)
 	" Gets the checking data
 	let l:data = grammar_comment#check_text(a:text_lines)
 
@@ -175,13 +175,13 @@ function grammar_comment#add_to_loclist(block, text_lines, buffer_nr)
 	endfor
 
 	" Adds to the loclist
-	call setloclist(0, loclist_param, 'a')
+	call setloclist(a:window, loclist_param, 'a')
 
 	return 0
 endfunction
 
 
-function grammar_comment#check_buffer(buffer_nr, file_name, extension)
+function grammar_comment#check_buffer(window, buffer_nr, file_name, extension)
 	" Does not run if there is no valid buffer
 	if bufname(a:buffer_nr) == ''
 		return -1
@@ -212,7 +212,7 @@ function grammar_comment#check_buffer(buffer_nr, file_name, extension)
 		endfor
 
 		" Adds to loclist
-		if grammar_comment#add_to_loclist(block, l:text_lines, a:buffer_nr) != 0
+		if grammar_comment#add_to_loclist(a:window, a:buffer_nr, block, l:text_lines) != 0
 			echo 'Unable to access LanguageTool server. Try later!'
 			return -2
 		endif
@@ -226,6 +226,7 @@ function grammar_comment#run()
 	let l:current_bufnr = bufnr('%')
 	let l:extension = expand('%:e')
 	let l:file_name = expand('%:t')
+	let l:window = winnr()
 
 	" Starts LanguageTool
 	if grammar_comment#start_lgt() != 0
@@ -234,10 +235,10 @@ function grammar_comment#run()
 	endif
 
 	" Clears the loclist
-	call setloclist(l:current_bufnr, [], 'r')
+	call setloclist(l:window, [], 'r')
 
 	" Checks the current buffer
-	if grammar_comment#check_buffer(l:current_bufnr, l:file_name, l:extension) == 0
+	if grammar_comment#check_buffer(l:window, l:current_bufnr, l:file_name, l:extension) == 0
 		lwindow
 	endif
 endfunction
