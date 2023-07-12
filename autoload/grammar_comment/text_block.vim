@@ -34,6 +34,9 @@ function grammar_comment#text_block#get_blocks(buf_lines, file_name, extension)
 	elseif a:extension == 'c' || a:extension == 'cpp' || a:extension == 'h' || a:extension == 'hpp'
 		let l:blocks = grammar_comment#c#functions#get_blocks(a:buf_lines)
 
+	elseif a:extension == 'sh'
+		let l:blocks = grammar_comment#shell#functions#get_blocks(a:buf_lines)
+
 	else  " File type is not supported
 		return -1
 	endif
