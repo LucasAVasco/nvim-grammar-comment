@@ -31,6 +31,9 @@ function grammar_comment#text_block#get_blocks(buf_lines, file_name, extension)
 	elseif a:extension == 'vim'
 		let l:blocks = grammar_comment#vimscript#functions#get_blocks(a:buf_lines)
 
+	elseif a:extension == 'md'
+		let l:blocks = grammar_comment#markdown#functions#get_blocks(a:buf_lines)
+
 	elseif a:extension == 'c' || a:extension == 'cpp' || a:extension == 'h' || a:extension == 'hpp'
 		let l:blocks = grammar_comment#c#functions#get_blocks(a:buf_lines)
 
