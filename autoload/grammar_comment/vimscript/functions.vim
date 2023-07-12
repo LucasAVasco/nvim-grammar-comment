@@ -1,9 +1,9 @@
-function grammar_comment#vimscript#functions#get_blocks(text_list)
+function grammar_comment#vimscript#functions#get_blocks(buf_lines)
 	let l:mult_line_pos = []
 	let l:sing_line_pos = []
 
 	" Blocks positions
-	for line in a:text_list
+	for line in a:buf_lines
 		" Comment at begin of line
 		let l:num = match(line, '^\s*" \=\zs.*$')
 
