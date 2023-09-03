@@ -124,15 +124,9 @@ function grammar_comment#add_to_loclist(window, buffer_nr, block, text_lines)
 	" Lines sizes
 	let l:lines_sizes = []
 
-	if a:block.end_pos == -1  " Unlimited block
-		for line in a:text_lines
-			call add(l:lines_sizes, len(line) + 1)
-		endfor
-
-	else                      " Limited block
-		let l:lines_sizes = map(range(a:block.n_lines),
-					\ a:block.end_pos - a:block.pos + 2)
-	endif
+	for line in a:text_lines
+		call add(l:lines_sizes, strdisplaywidth(line) + 1)
+	endfor
 
 	for data_item in l:data.matches
 		" Position
@@ -146,7 +140,7 @@ function grammar_comment#add_to_loclist(window, buffer_nr, block, text_lines)
 
 		" Considers position of block
 		let l:line += a:block.f_line + 1
-		let l:col += a:block.pos + 1
+		let l:col += a:block.vcol
 
 		" Replacements
 		let l:text = data_item.message
@@ -166,7 +160,7 @@ function grammar_comment#add_to_loclist(window, buffer_nr, block, text_lines)
 					\ 'bufnr': a:buffer_nr,
 					\ 'lnum': l:line,
 					\ 'col': l:col,
-					\ 'vcol': 0,
+					\ 'vcol': 1,
 					\ 'text': l:text,
 					\ 'type': 'E',
 					\ }
@@ -175,7 +169,7 @@ function grammar_comment#add_to_loclist(window, buffer_nr, block, text_lines)
 	endfor
 
 	" Adds to the loclist
-	call setloclist(a:window, loclist_param, 'a')
+	call setloclist(a:window, l:loclist_param, 'a')
 
 	return 0
 endfunction
@@ -210,6 +204,9 @@ function grammar_comment#check_buffer(window, buffer_nr, file_name, extension)
 		for line in l:buf_lines[block.f_line:block.f_line + block.n_lines - 1]
 			call add(l:text_lines, line[block.pos:block.end_pos])
 		endfor
+
+		" Column (visual) where the block starts
+		let block.vcol = strdisplaywidth(l:buf_lines[block.f_line][:block.pos])
 
 		" Adds to loclist
 		if grammar_comment#add_to_loclist(a:window, a:buffer_nr, block, l:text_lines) != 0
