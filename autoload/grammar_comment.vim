@@ -4,6 +4,7 @@ let s:lgt_path = ''
 let s:lgt_file = ''
 let s:job_id = 0
 let s:current_matches = []
+let s:lgt_lang_codes = []
 
 
 
@@ -11,6 +12,7 @@ function grammar_comment#config()
 	let s:lgt_url = 'https://languagetool.org/download/LanguageTool-' . g:lgt_version . '.zip'
 	let s:lgt_path = s:base_dir . '/languagetool/LanguageTool-' . g:lgt_version
 	let s:lgt_file = s:lgt_path . '/languagetool-server.jar'
+	let s:lgt_cmd_file = s:lgt_path . '/languagetool-commandline.jar'
 endfunction
 
 
@@ -35,7 +37,7 @@ function s:std_error(job_id, data, event) dict
 endfunction
 
 
-function grammar_comment#start_lgt()
+function grammar_comment#init()
 	call grammar_comment#config()
 
 	" Installs LanguageTool if needed
@@ -47,6 +49,46 @@ function grammar_comment#start_lgt()
 	if filereadable(s:lgt_file) == v:false
 		return -1
 	endif
+endfunction
+
+
+function grammar_comment#lgt_lang_codes_complete(arg, line, column)
+	call grammar_comment#config()
+
+	" If it can not download LanguageTool
+	if filereadable(s:lgt_file) == v:false
+		return []
+	endif
+
+	" Gets LanguageTool language codes
+	if s:lgt_lang_codes == []
+		let s:lgt_lang_codes = system([ 'java', '-jar', s:lgt_cmd_file, '--list' ])
+		let s:lgt_lang_codes = substitute(s:lgt_lang_codes, ' .\{-}\n', '\n', 'g')  " Formats (removes the language names)
+		let s:lgt_lang_codes = split(s:lgt_lang_codes, '\n')                        " Splits in a list
+	endif
+
+	" Only shows the entries that match the argument
+	let l:ret = []
+
+	for code in s:lgt_lang_codes
+		if match(code, a:arg) != -1
+			call add(l:ret, code)
+		endif
+	endfor
+
+	return l:ret
+endfunction
+
+
+function grammar_comment#list_lgt_languages()
+	call grammar_comment#init()
+
+	echo system([ 'java', '-jar', s:lgt_cmd_file, '--list' ])
+endfunction
+
+
+function grammar_comment#start_lgt()
+	call grammar_comment#init()
 
 	if s:job_id == 0
 		let s:job_id = jobstart([ 'java', '-cp', s:lgt_file, 'org.languagetool.server.HTTPServer', '--port', '8081' ],
@@ -71,16 +113,16 @@ function grammar_comment#stop_lgt()
 endfunction
 
 
-function grammar_comment#send_text_with_curl(text_lines)
+function grammar_comment#send_text_with_curl(text_lines, lang_code)
 	let l:text = join(a:text_lines, "\n")
 
-	return system(['curl', '-s', '-d', 'language=en-US', '-d', 'text=' . l:text , 'http://localhost:8081/v2/check'])
+	return system(['curl', '-s', '-d', 'language=' . a:lang_code, '-d', 'text=' . l:text , 'http://localhost:8081/v2/check'])
 endfunction
 
 
-function grammar_comment#check_text(text_lines)
+function grammar_comment#check_text(text_lines, lang_code)
 	" First time sending the text
-	let l:output = grammar_comment#send_text_with_curl(a:text_lines)
+	let l:output = grammar_comment#send_text_with_curl(a:text_lines, a:lang_code)
 	let l:time = 0
 
 	" Try to reset the LanguageTool server
@@ -91,7 +133,7 @@ function grammar_comment#check_text(text_lines)
 
 	" Try again to send the text
 	while l:output == '' && l:time < g:lgt_answer_timeout
-		let l:output = grammar_comment#send_text_with_curl(a:text_lines)
+		let l:output = grammar_comment#send_text_with_curl(a:text_lines, a:lang_code)
 		let l:time += 1
 		sleep 1
 	endwhile
@@ -105,9 +147,9 @@ function grammar_comment#check_text(text_lines)
 endfunction
 
 
-function grammar_comment#add_to_loclist(window, buffer_nr, block, text_lines)
+function grammar_comment#add_to_loclist(window, buffer_nr, block, text_lines, lang_code)
 	" Gets the checking data
-	let l:data = grammar_comment#check_text(a:text_lines)
+	let l:data = grammar_comment#check_text(a:text_lines, a:lang_code)
 
 	if l:data == {}  " If it can not access the server, cancels the verification
 		return -1
@@ -175,7 +217,7 @@ function grammar_comment#add_to_loclist(window, buffer_nr, block, text_lines)
 endfunction
 
 
-function grammar_comment#check_buffer(window, buffer_nr, file_name, extension)
+function grammar_comment#check_buffer(window, buffer_nr, file_name, extension, lang_code)
 	" Does not run if there is no valid buffer
 	if bufname(a:buffer_nr) == ''
 		return -1
@@ -196,7 +238,6 @@ function grammar_comment#check_buffer(window, buffer_nr, file_name, extension)
 		return 0
 	endif
 
-
 	" Checks the blocks
 	for block in l:blocks
 		let l:text_lines = []
@@ -209,7 +250,7 @@ function grammar_comment#check_buffer(window, buffer_nr, file_name, extension)
 		let block.vcol = strdisplaywidth(l:buf_lines[block.f_line][:block.pos])
 
 		" Adds to loclist
-		if grammar_comment#add_to_loclist(a:window, a:buffer_nr, block, l:text_lines) != 0
+		if grammar_comment#add_to_loclist(a:window, a:buffer_nr, block, l:text_lines, a:lang_code) != 0
 			echo 'Unable to access LanguageTool server. Try later!'
 			return -2
 		endif
@@ -219,11 +260,17 @@ function grammar_comment#check_buffer(window, buffer_nr, file_name, extension)
 endfunction
 
 
-function grammar_comment#run()
+function grammar_comment#run(lang_code)
 	let l:current_bufnr = bufnr('%')
 	let l:extension = expand('%:e')
 	let l:file_name = expand('%:t')
 	let l:window = winnr()
+	let l:lang_code = a:lang_code
+
+	" Uses the default language if no one is specified
+	if l:lang_code == ''
+		let l:lang_code = g:lgt_lang_code
+	endif
 
 	" Starts LanguageTool
 	if grammar_comment#start_lgt() != 0
@@ -235,7 +282,7 @@ function grammar_comment#run()
 	call setloclist(l:window, [], 'r')
 
 	" Checks the current buffer
-	if grammar_comment#check_buffer(l:window, l:current_bufnr, l:file_name, l:extension) == 0
+	if grammar_comment#check_buffer(l:window, l:current_bufnr, l:file_name, l:extension, l:lang_code) == 0
 		lwindow
 	endif
 endfunction

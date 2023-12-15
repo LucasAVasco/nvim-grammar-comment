@@ -20,6 +20,7 @@ endif
 
 command! -nargs=0 GrammarStartLGT :call grammar_comment#start_lgt()
 command! -nargs=0 GrammarStopLGT :call grammar_comment#stop_lgt()
-command! -nargs=0 GrammarCheck :call grammar_comment#run()
+command! -nargs=0 GrammarListSupported :call grammar_comment#list_lgt_languages()
+command! -nargs=? -complete=customlist,grammar_comment#lgt_lang_codes_complete GrammarCheck :call grammar_comment#run(<q-args>)
 command! -nargs=0 GrammarShowBlocks :call grammar_comment#show_blocks()
 command! -nargs=0 GrammarHideBlocks :call grammar_comment#hide_blocks()
