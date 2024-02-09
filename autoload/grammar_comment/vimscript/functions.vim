@@ -5,7 +5,7 @@ function grammar_comment#vimscript#functions#get_blocks(buf_lines)
 	" Blocks positions
 	for line in a:buf_lines
 		" Comment at begin of line
-		let l:num = match(line, '^\s*" \=\zs.*$')
+		let l:num = match(line, '^\s*" *\zs.*$')
 
 		if l:num != -1
 			call add(l:mult_line_pos, l:num)
