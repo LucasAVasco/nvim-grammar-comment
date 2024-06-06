@@ -17,6 +17,10 @@ function grammar_comment#latex#functions#get_blocks(buf_lines)
 		call add(l:mult_unl_pos, -1)  " Current line without mult blocks
 		call add(l:pos_list, [])  " Creates the list of blocks in this line
 
+		if match(line, '^\s*%') != -1
+			continue
+		endif
+
 		" LaTex directives that have text to check
 		for dir in s:directives_with_text_inside_brackets
 			if match(line, '^\s*\\'.dir.'{') != -1
